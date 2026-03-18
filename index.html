@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d2a3a" />
+  <meta name="description" content="Sere.IA — sua companheira virtual brasileira" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Sere.IA</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --deep:  #060f1a;  --abyss: #0a1a2e;  --ocean: #0d2a3a;
+      --teal:  #0e7c7b;  --aqua:  #2ec4b6;  --foam:  #a8e6cf;
+      --rose:  #f4a7b9;  --gold:  #f6d860;  --pearl: #f0ede8;
+      --mist:  rgba(255,255,255,.06);
+      --glass: rgba(14,124,123,.15);
+      --radius:20px;
+      --font-display:'Cormorant Garamond',serif;
+      --font-body:'DM Sans',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:var(--deep);color:var(--pearl);font-family:var(--font-body);overflow:hidden}
+
+    /* Ocean BG */
+    body::before{content:'';position:fixed;inset:0;z-index:0;background:
+      radial-gradient(ellipse 80% 60% at 50% 110%,#0e7c7b44 0%,transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 20%, #f4a7b922 0%,transparent 50%),
+      radial-gradient(ellipse 100% 80% at 20% 80%,#2ec4b615 0%,transparent 60%),
+      linear-gradient(180deg,#060f1a 0%,#0a1a2e 40%,#0d2a3a 100%)}
+    body::after{content:'';position:fixed;inset:0;z-index:0;
+      background-image:radial-gradient(circle at 20% 30%,rgba(46,196,182,.04) 1px,transparent 1px),
+                       radial-gradient(circle at 80% 70%,rgba(244,167,185,.04) 1px,transparent 1px);
+      background-size:40px 40px,60px 60px;animation:drift 20s ease-in-out infinite}
+    @keyframes drift{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+    /* Bubbles */
+    .bubbles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .bubble{position:absolute;bottom:-60px;border-radius:50%;
+      background:radial-gradient(circle at 35% 35%,rgba(46,196,182,.25),rgba(46,196,182,.05));
+      border:1px solid rgba(46,196,182,.2);animation:rise linear infinite}
+    @keyframes rise{0%{transform:translateY(0) translateX(0);opacity:0}
+      10%{opacity:1}90%{opacity:.4}100%{transform:translateY(-110vh) translateX(30px);opacity:0}}
+
+    /* App shell */
+    #app{position:relative;z-index:1;height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto}
+
+    /* Screens */
+    .screen{position:absolute;inset:0;display:flex;flex-direction:column;
+      opacity:0;pointer-events:none;transition:opacity .45s ease,transform .45s ease;transform:translateY(18px)}
+    .screen.active{opacity:1;pointer-events:all;transform:translateY(0)}
+
+    /* ── Shared buttons ── */
+    .btn-primary{width:100%;padding:16px;border:none;border-radius:50px;
+      background:linear-gradient(135deg,#0e7c7b,#2ec4b6);color:#fff;
+      font-family:var(--font-body);font-size:16px;font-weight:500;letter-spacing:.8px;cursor:pointer;
+      box-shadow:0 8px 30px rgba(14,124,123,.4);transition:transform .2s,box-shadow .2s}
+    .btn-primary:active{transform:scale(.97)}.btn-primary:hover{box-shadow:0 12px 40px rgba(14,124,123,.55)}
+    .btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+    .btn-outline-rose{width:100%;padding:15px;border:1.5px solid rgba(244,167,185,.4);
+      background:rgba(244,167,185,.06);color:var(--rose);border-radius:50px;
+      font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;transition:all .2s}
+    .btn-outline-rose:hover{background:rgba(244,167,185,.12)}
+
+    .btn-ghost{background:transparent;border:1px solid rgba(46,196,182,.3);color:var(--aqua);
+      padding:10px 22px;border-radius:50px;font-family:var(--font-body);font-size:14px;cursor:pointer;transition:all .2s}
+    .btn-ghost:hover{background:rgba(46,196,182,.1)}
+
+    /* ── Shared form ── */
+    .field-group{display:flex;flex-direction:column;gap:6px}
+    .field-label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--aqua);opacity:.8;padding-left:4px}
+    .field-input,.field-select,.field-textarea{background:rgba(255,255,255,.05);
+      border:1px solid rgba(46,196,182,.2);border-radius:14px;padding:14px 16px;
+      color:var(--pearl);font-family:var(--font-body);font-size:15px;
+      transition:border-color .2s,background .2s;outline:none;width:100%}
+    .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:rgba(46,196,182,.6);background:rgba(46,196,182,.08)}
+    .field-input::placeholder,.field-textarea::placeholder{color:rgba(240,237,232,.25)}
+    .field-select{appearance:none;cursor:pointer}.field-select option{background:#0d2a3a}
+    .field-textarea{resize:none;min-height:80px;line-height:1.6}
+
+    .chips-wrap{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 16px;border-radius:50px;border:1px solid rgba(46,196,182,.25);background:transparent;
+      color:rgba(240,237,232,.7);font-family:var(--font-body);font-size:13px;cursor:pointer;transition:all .2s}
+    .chip.selected{background:linear-gradient(135deg,rgba(14,124,123,.4),rgba(46,196,182,.3));
+      border-color:var(--aqua);color:var(--aqua)}
+
+    .screen-title{font-family:var(--font-display);font-size:30px;font-weight:300;color:var(--pearl);margin-bottom:4px}
+    .screen-title em{font-style:italic;background:linear-gradient(90deg,#2ec4b6,#f4a7b9);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .screen-sub{font-size:13px;color:rgba(240,237,232,.5)}
+
+    .back-btn{display:inline-flex;align-items:center;gap:6px;
+      background:none;border:none;color:rgba(46,196,182,.8);
+      font-family:var(--font-body);font-size:14px;cursor:pointer;
+      padding:4px 0;margin-bottom:10px;transition:color .2s}
+    .back-btn:hover{color:var(--aqua)}
+
+    /* ════════════════════════════
+       SCREEN 0 — WELCOME
+    ════════════════════════════ */
+    #screen-welcome{align-items:center;justify-content:center;padding:36px 26px;gap:26px}
+
+    .logo-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+    .logo-icon{width:88px;height:88px;background:linear-gradient(135deg,#0e7c7b,#2ec4b6,#f4a7b9);
+      border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;
+      box-shadow:0 0 40px rgba(46,196,182,.4),0 0 80px rgba(46,196,182,.15);
+      animation:pulse-glow 3s ease-in-out infinite}
+    @keyframes pulse-glow{0%,100%{box-shadow:0 0 40px rgba(46,196,182,.4),0 0 80px rgba(46,196,182,.15)}
+      50%{box-shadow:0 0 60px rgba(46,196,182,.6),0 0 120px rgba(46,196,182,.25)}}
+    .logo-title{font-family:var(--font-display);font-size:52px;font-weight:300;letter-spacing:6px;
+      background:linear-gradient(135deg,#2ec4b6 0%,#f4a7b9 60%,#f6d860 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .logo-sub{font-size:12px;letter-spacing:4px;text-transform:uppercase;color:rgba(168,230,207,.6)}
+
+    .welcome-card{background:var(--glass);border:1px solid rgba(46,196,182,.2);border-radius:var(--radius);
+      padding:20px;backdrop-filter:blur(20px);text-align:center}
+    .welcome-card p{font-size:14.5px;line-height:1.75;color:rgba(240,237,232,.85)}
+    .welcome-card .emoji-wave{font-size:26px;display:block;margin-bottom:10px}
+
+    /* Choice buttons */
+    .choice-wrap{display:flex;flex-direction:column;gap:12px;width:100%}
+    .btn-choice{width:100%;padding:16px 18px;border-radius:16px;cursor:pointer;
+      display:flex;align-items:center;gap:14px;text-align:left;transition:transform .2s}
+    .btn-choice:active{transform:scale(.97)}
+    .btn-choice-create{border:none;background:linear-gradient(135deg,#0e7c7b,#2ec4b6);color:#fff;
+      box-shadow:0 8px 30px rgba(14,124,123,.35)}
+    .btn-choice-default{border:1.5px solid rgba(244,167,185,.35);background:rgba(244,167,185,.08);color:var(--pearl)}
+    .btn-choice-default:hover{background:rgba(244,167,185,.13);border-color:rgba(244,167,185,.5)}
+    .choice-icon{font-size:28px;flex-shrink:0}
+    .choice-text{display:flex;flex-direction:column;gap:2px}
+    .choice-label{font-size:15px;font-weight:500}
+    .choice-desc{font-size:12px;opacity:.6;font-weight:300}
+
+    .disclaimer{font-size:11px;color:rgba(240,237,232,.33);text-align:center;line-height:1.6}
+
+    /* ════════════════════════════
+       SCREEN 1 — PERSONALIZAR
+    ════════════════════════════ */
+    #screen-create{overflow:hidden}
+    .create-header{padding:54px 26px 14px;text-align:center}
+    .create-scroll{flex:1;overflow-y:auto;padding:14px 22px 128px;display:flex;flex-direction:column;gap:14px}
+    .create-scroll::-webkit-scrollbar{display:none}
+
+    .form-avatar-wrap{display:flex;justify-content:center;margin-bottom:4px}
+    .form-avatar{width:100px;height:100px;border-radius:50%;
+      background:linear-gradient(135deg,rgba(14,124,123,.2),rgba(244,167,185,.2));
+      border:2px solid rgba(46,196,182,.3);display:flex;align-items:center;justify-content:center;
+      font-size:44px;position:relative;overflow:hidden;box-shadow:0 0 28px rgba(46,196,182,.2)}
+    .form-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;display:none}
+
+    .floating-cta{position:absolute;bottom:0;left:0;right:0;padding:12px 22px 32px;
+      background:linear-gradient(to top,var(--deep) 65%,transparent)}
+
+    /* ════════════════════════════
+       SCREEN 2 — PREVIEW GERADO
+    ════════════════════════════ */
+    #screen-preview{overflow-y:auto}
+    #screen-preview::-webkit-scrollbar{display:none}
+
+    .preview-header{padding:54px 26px 18px;text-align:center;flex-shrink:0}
+
+    .gen-avatar-wrap{padding:0 26px;display:flex;flex-direction:column;align-items:center;gap:14px;flex-shrink:0}
+
+    .gen-avatar-frame{width:240px;height:300px;border-radius:28px;
+      background:linear-gradient(160deg,rgba(14,124,123,.2),rgba(244,167,185,.15));
+      border:1.5px solid rgba(46,196,182,.25);overflow:hidden;position:relative;
+      box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(46,196,182,.1);
+      display:flex;align-items:center;justify-content:center}
+    .gen-avatar-frame img{width:100%;height:100%;object-fit:cover;display:none}
+
+    /* Shimmer skeleton */
+    .shimmer{position:absolute;inset:0;border-radius:28px;
+      background:linear-gradient(90deg,rgba(46,196,182,.04) 0%,rgba(46,196,182,.14) 40%,rgba(46,196,182,.04) 80%);
+      background-size:200% 100%;animation:shimmer 1.6s infinite}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* Generating overlay */
+    .gen-overlay{position:absolute;inset:0;border-radius:28px;
+      background:rgba(6,15,26,.75);display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:14px;backdrop-filter:blur(4px)}
+    .gen-spinner{width:42px;height:42px;border-radius:50%;
+      border:3px solid rgba(46,196,182,.2);border-top-color:var(--aqua);
+      animation:spin .85s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .gen-text{font-size:14px;color:rgba(240,237,232,.75);text-align:center;line-height:1.55}
+
+    .name-badge{background:rgba(14,124,123,.25);border:1px solid rgba(46,196,182,.25);
+      border-radius:50px;padding:8px 22px;font-family:var(--font-display);
+      font-size:22px;font-weight:300;color:var(--pearl);letter-spacing:2px;backdrop-filter:blur(10px)}
+
+    .trait-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 26px}
+    .trait-tag{padding:6px 14px;border-radius:50px;
+      background:rgba(46,196,182,.1);border:1px solid rgba(46,196,182,.2);
+      font-size:12px;color:var(--aqua)}
+
+    .preview-actions{width:100%;padding:18px 22px 48px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+
+    /* ════════════════════════════
+       SCREEN 3 — CHAT
+    ════════════════════════════ */
+    #screen-chat{display:flex;flex-direction:column}
+
+    .chat-header{padding:54px 18px 12px;background:linear-gradient(to bottom,var(--ocean),transparent);
+      display:flex;align-items:center;gap:12px;flex-shrink:0}
+    .chat-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0e7c7b,#2ec4b6);
+      display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+      box-shadow:0 0 20px rgba(46,196,182,.3);position:relative;overflow:hidden}
+    .chat-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;display:none}
+    .online-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;
+      background:#4caf50;border:2px solid var(--ocean)}
+    .chat-info{flex:1}
+    .chat-name{font-family:var(--font-display);font-size:20px;font-weight:400}
+    .chat-status{font-size:11px;color:rgba(46,196,182,.7)}
+    .chat-actions{display:flex;gap:8px}
+    .icon-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(46,196,182,.2);
+      background:rgba(46,196,182,.08);color:var(--aqua);display:flex;align-items:center;
+      justify-content:center;cursor:pointer;font-size:16px;transition:all .2s}
+    .icon-btn:active{transform:scale(.9);background:rgba(46,196,182,.2)}
+
+    .freemium-banner{display:flex;align-items:center;justify-content:space-between;padding:7px 16px;
+      background:rgba(246,216,96,.07);border-top:1px solid rgba(246,216,96,.12);flex-shrink:0}
+    .freemium-text{font-size:12px;color:rgba(246,216,96,.7)}
+    .upgrade-btn{font-size:12px;font-weight:500;color:var(--gold);background:none;
+      border:1px solid rgba(246,216,96,.3);border-radius:50px;padding:4px 12px;cursor:pointer}
+
+    .avatar-video-wrap{flex-shrink:0;height:185px;background:linear-gradient(180deg,rgba(14,124,123,.1),transparent);
+      display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .avatar-video-inner{text-align:center}
+    .avatar-video-emoji{font-size:68px;display:block;filter:drop-shadow(0 0 20px rgba(46,196,182,.5));animation:float 4s ease-in-out infinite}
+    .avatar-video-img{width:110px;height:130px;border-radius:20px;object-fit:cover;display:none;
+      box-shadow:0 10px 40px rgba(0,0,0,.5);animation:float 4s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+    .speaking-indicator{display:flex;gap:5px;justify-content:center;margin-top:10px;opacity:0;transition:opacity .3s}
+    .speaking-indicator.active{opacity:1}
+    .wave-bar{width:4px;border-radius:4px;background:linear-gradient(to top,var(--teal),var(--aqua));animation:wave-anim .8s ease-in-out infinite}
+    .wave-bar:nth-child(1){height:10px;animation-delay:0s}.wave-bar:nth-child(2){height:20px;animation-delay:.1s}
+    .wave-bar:nth-child(3){height:14px;animation-delay:.2s}.wave-bar:nth-child(4){height:22px;animation-delay:.05s}
+    .wave-bar:nth-child(5){height:10px;animation-delay:.15s}
+    @keyframes wave-anim{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.3)}}
+
+    .messages-wrap{flex:1;overflow-y:auto;padding:10px 14px 8px;display:flex;flex-direction:column;gap:10px}
+    .messages-wrap::-webkit-scrollbar{display:none}
+
+    .msg{display:flex;gap:10px;max-width:85%;animation:msg-in .3s ease}
+    .msg.user{align-self:flex-end;flex-direction:row-reverse}
+    .msg.ai  {align-self:flex-start}
+    @keyframes msg-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    .msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,#0e7c7b,#2ec4b6);display:flex;align-items:center;
+      justify-content:center;font-size:14px;align-self:flex-end;overflow:hidden}
+    .msg-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+
+    .msg-bubble{padding:12px 16px;border-radius:18px;font-size:14px;line-height:1.6;max-width:100%}
+    .msg.ai  .msg-bubble{background:rgba(14,124,123,.2);border:1px solid rgba(46,196,182,.2);border-bottom-left-radius:4px;color:var(--pearl)}
+    .msg.user .msg-bubble{background:linear-gradient(135deg,rgba(244,167,185,.25),rgba(244,167,185,.15));
+      border:1px solid rgba(244,167,185,.25);border-bottom-right-radius:4px;color:var(--pearl)}
+    .msg-time{font-size:10px;color:rgba(240,237,232,.3);padding:0 4px;margin-top:2px}
+
+    .typing-bubble{display:flex;align-items:center;gap:5px;padding:14px 18px}
+    .typing-dot{width:7px;height:7px;border-radius:50%;background:var(--aqua);opacity:.6;animation:typing 1.2s infinite}
+    .typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
+    @keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+
+    .input-bar{padding:10px 12px 28px;background:linear-gradient(to top,var(--deep) 80%,transparent);flex-shrink:0}
+    .input-inner{display:flex;align-items:flex-end;gap:8px;background:rgba(255,255,255,.06);
+      border:1px solid rgba(46,196,182,.2);border-radius:28px;padding:8px 8px 8px 16px;
+      backdrop-filter:blur(10px);transition:border-color .2s}
+    .input-inner:focus-within{border-color:rgba(46,196,182,.5)}
+    #chat-input{flex:1;background:none;border:none;outline:none;color:var(--pearl);
+      font-family:var(--font-body);font-size:15px;resize:none;max-height:100px;line-height:1.5;padding:4px 0}
+    #chat-input::placeholder{color:rgba(240,237,232,.3)}
+    .input-actions{display:flex;gap:6px;align-items:center}
+    .mic-btn{width:38px;height:38px;border-radius:50%;border:1px solid rgba(46,196,182,.3);
+      background:rgba(46,196,182,.08);color:var(--aqua);cursor:pointer;display:flex;
+      align-items:center;justify-content:center;font-size:18px;transition:all .2s;flex-shrink:0}
+    .mic-btn.recording{background:rgba(244,167,185,.2);border-color:var(--rose);color:var(--rose);animation:mic-pulse 1s infinite}
+    @keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,167,185,.4)}50%{box-shadow:0 0 0 8px rgba(244,167,185,0)}}
+    .send-btn{width:38px;height:38px;border-radius:50%;border:none;background:linear-gradient(135deg,#0e7c7b,#2ec4b6);
+      color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:16px;flex-shrink:0;box-shadow:0 4px 15px rgba(14,124,123,.4);transition:all .2s}
+    .send-btn:active{transform:scale(.9)}
+
+    /* ════════════════════════════
+       UPGRADE MODAL
+    ════════════════════════════ */
+    .modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(6,15,26,.85);
+      display:flex;align-items:flex-end;justify-content:center;
+      opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(8px)}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal-sheet{width:100%;max-width:480px;background:var(--abyss);border:1px solid rgba(46,196,182,.15);
+      border-bottom:none;border-radius:28px 28px 0 0;padding:8px 26px 48px;
+      transform:translateY(100%);transition:transform .4s cubic-bezier(.32,.72,0,1)}
+    .modal-overlay.open .modal-sheet{transform:translateY(0)}
+    .modal-handle{width:40px;height:4px;border-radius:4px;background:rgba(255,255,255,.15);margin:12px auto 22px}
+    .modal-title{font-family:var(--font-display);font-size:28px;font-weight:300;text-align:center;margin-bottom:6px}
+    .modal-sub{text-align:center;font-size:13px;color:rgba(240,237,232,.5);margin-bottom:24px}
+    .plan-card{border-radius:var(--radius);padding:20px;margin-bottom:12px;border:1px solid rgba(46,196,182,.15);background:var(--mist)}
+    .plan-card.featured{border-color:rgba(46,196,182,.4);background:linear-gradient(135deg,rgba(14,124,123,.15),rgba(46,196,182,.08))}
+    .plan-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .plan-name{font-size:16px;font-weight:500}
+    .plan-price{font-family:var(--font-display);font-size:24px;color:var(--aqua)}
+    .plan-price span{font-size:12px;color:rgba(240,237,232,.5)}
+    .plan-features{list-style:none;display:flex;flex-direction:column;gap:5px}
+    .plan-features li{font-size:13px;color:rgba(240,237,232,.7);display:flex;gap:8px}
+    .plan-features li::before{content:'✦';color:var(--aqua);font-size:10px}
+
+    /* ════════════════════════════
+       SETTINGS PANEL
+    ════════════════════════════ */
+    .settings-panel{position:fixed;inset:0;z-index:90;background:var(--deep);
+      transform:translateX(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);
+      padding:60px 24px 40px;overflow-y:auto}
+    .settings-panel.open{transform:translateX(0)}
+    .settings-header{display:flex;align-items:center;gap:16px;margin-bottom:28px}
+    .settings-back{font-size:22px;cursor:pointer;color:var(--aqua)}
+    .settings-title{font-family:var(--font-display);font-size:28px;font-weight:300}
+    .settings-section{margin-bottom:24px}
+    .settings-section-title{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--aqua);opacity:.7;margin-bottom:10px}
+    .setting-row{display:flex;justify-content:space-between;align-items:center;
+      padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+    .setting-label{font-size:14px;color:rgba(240,237,232,.8)}
+    .setting-desc{font-size:12px;color:rgba(240,237,232,.4);margin-top:2px}
+    .toggle{width:46px;height:26px;border-radius:50px;background:rgba(255,255,255,.1);
+      border:1px solid rgba(255,255,255,.1);cursor:pointer;position:relative;transition:background .3s;flex-shrink:0}
+    .toggle.on{background:linear-gradient(135deg,#0e7c7b,#2ec4b6)}
+    .toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;
+      border-radius:50%;background:#fff;transition:transform .3s}
+    .toggle.on::after{transform:translateX(20px)}
+    .api-key-input{background:rgba(255,255,255,.05);border:1px solid rgba(46,196,182,.15);
+      border-radius:12px;padding:10px 14px;color:var(--pearl);font-family:var(--font-body);
+      font-size:13px;width:100%;outline:none;margin-top:8px}
+    .api-key-input:focus{border-color:rgba(46,196,182,.4)}
+
+    /* Toasts */
+    .toast-wrap{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200;
+      display:flex;flex-direction:column;gap:8px;align-items:center}
+    .toast{background:rgba(14,124,123,.9);border:1px solid rgba(46,196,182,.4);border-radius:50px;
+      padding:10px 20px;font-size:13px;color:var(--pearl);backdrop-filter:blur(10px);white-space:nowrap;
+      animation:toast-in .3s ease, toast-out .3s ease 2.7s forwards}
+    @keyframes toast-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes toast-out{to{opacity:0;transform:translateY(-10px)}}
+
+    .hidden{display:none !important}
+
+    @supports (padding:max(0px)){
+      #screen-chat .input-bar{padding-bottom:max(28px,env(safe-area-inset-bottom))}
+      .chat-header{padding-top:max(54px,calc(env(safe-area-inset-top) + 14px))}
+    }
+  </style>
+</head>
+<body>
+
+<div class="bubbles" id="bubbles"></div>
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<div id="app">
+
+  <!-- ══════════════════
+       SCREEN 0 — WELCOME
+  ══════════════════ -->
+  <div class="screen active" id="screen-welcome">
+    <div class="logo-wrap">
+      <div class="logo-icon">🧜‍♀️</div>
+      <div class="logo-title">Sere.IA</div>
+      <div class="logo-sub">Companion Virtual Brasileira</div>
+    </div>
+
+    <div class="welcome-card">
+      <span class="emoji-wave">🌊</span>
+      <p>Oi! Sou <strong>Sere.IA</strong>, sua companheira virtual e digital! Como foi seu dia? Tudo aqui é fantasia de IA, <strong>18+ ok?</strong> Mergulha comigo! 🧜‍♀️</p>
+    </div>
+
+    <div class="choice-wrap">
+      <button class="btn-choice btn-choice-create" onclick="goToCreate()">
+        <span class="choice-icon">✨</span>
+        <span class="choice-text">
+          <span class="choice-label">Criar minha própria sereia</span>
+          <span class="choice-desc">Personalize nome, visual e personalidade</span>
+        </span>
+      </button>
+      <button class="btn-choice btn-choice-default" onclick="startDefaultChat()">
+        <span class="choice-icon">🧜‍♀️</span>
+        <span class="choice-text">
+          <span class="choice-label">Conversar com a Sere.IA</span>
+          <span class="choice-desc">Marina — carioca, carinhosa e misteriosa</span>
+        </span>
+      </button>
+    </div>
+
+    <p class="disclaimer">Conteúdo fictício gerado por IA. Não substitui relacionamentos reais.<br/>Uso restrito a maiores de 18 anos.</p>
+  </div>
+
+  <!-- ══════════════════
+       SCREEN 1 — CRIAR
+  ══════════════════ -->
+  <div class="screen" id="screen-create">
+    <div class="create-header">
+      <button class="back-btn" onclick="showScreen('screen-welcome')">← Voltar</button>
+      <h1 class="screen-title">Crie sua <em>companheira</em></h1>
+      <p class="screen-sub">Ela vai ser única — do jeito que você imaginar 💫</p>
+    </div>
+
+    <div class="create-scroll">
+      <div class="form-avatar-wrap">
+        <div class="form-avatar" id="form-avatar-circle">
+          🧜‍♀️
+          <img id="form-avatar-img" alt="preview" />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Nome dela</label>
+        <input type="text" class="field-input" id="f-name" placeholder="Ex: Marina, Luna, Iara..." maxlength="20" />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Personalidade</label>
+        <div class="chips-wrap" id="personality-chips">
+          <button class="chip selected" data-val="carinhosa">💕 Carinhosa</button>
+          <button class="chip" data-val="misteriosa">🌙 Misteriosa</button>
+          <button class="chip" data-val="divertida">🎉 Divertida</button>
+          <button class="chip" data-val="intelectual">📚 Intelectual</button>
+          <button class="chip" data-val="ousada">🔥 Ousada</button>
+          <button class="chip" data-val="serena">🍃 Serena</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Idade aparente</label>
+        <select class="field-select" id="f-age">
+          <option value="20">~20 anos</option>
+          <option value="25" selected>~25 anos</option>
+          <option value="30">~30 anos</option>
+          <option value="35">~35 anos</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Descrição visual</label>
+        <textarea class="field-textarea" id="f-desc"
+          placeholder="Ex: cabelos longos negros ondulados, olhos verdes oceano, pele morena, rosto suave e misterioso..."></textarea>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Sotaque / origem</label>
+        <select class="field-select" id="f-origin">
+          <option value="carioca">Carioca (Rio de Janeiro)</option>
+          <option value="paulista">Paulista (São Paulo)</option>
+          <option value="nordestina">Nordestina</option>
+          <option value="gaucha">Gaúcha</option>
+          <option value="mineira">Mineira</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="floating-cta">
+      <button class="btn-primary" id="gen-btn" onclick="generateAvatar()">Gerar Avatar com IA 🎨</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════
+       SCREEN 2 — PREVIEW
+  ══════════════════ -->
+  <div class="screen" id="screen-preview">
+
+    <div class="preview-header">
+      <button class="back-btn" onclick="goBackToEdit()">← Voltar</button>
+      <h1 class="screen-title">Sua <em>companheira</em></h1>
+      <p class="screen-sub" id="prev-sub">Gerando com IA... ✨</p>
+    </div>
+
+    <div class="gen-avatar-wrap">
+      <div class="gen-avatar-frame" id="gen-frame">
+        <div class="shimmer"      id="gen-shimmer"></div>
+        <div class="gen-overlay"  id="gen-overlay">
+          <div class="gen-spinner"></div>
+          <div class="gen-text">Gerando sua companheira<br/>com IA... ✨</div>
+        </div>
+        <img id="gen-img" alt="Avatar gerado" />
+      </div>
+
+      <div class="name-badge" id="prev-name-badge">Sere.IA</div>
+    </div>
+
+    <div class="trait-row" id="prev-traits"></div>
+
+    <div class="preview-actions">
+      <!-- ★ CONTINUE button — disabled until image loads -->
+      <button class="btn-primary" id="btn-continue" onclick="confirmAvatar()" disabled>
+        ✦ Continuar com ela
+      </button>
+      <!-- ★ EDIT AGAIN button — always enabled -->
+      <button class="btn-outline-rose" onclick="goBackToEdit()">
+        ✏️ Editar de novo
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════
+       SCREEN 3 — CHAT
+  ══════════════════ -->
+  <div class="screen" id="screen-chat">
+
+    <div class="chat-header">
+      <div class="chat-avatar" id="chat-avatar-el">
+        <span id="chat-avatar-emoji">🧜‍♀️</span>
+        <img   id="chat-avatar-img"   alt="avatar" />
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name"   id="chat-name-display">Sere.IA</div>
+        <div class="chat-status" id="chat-status">online • pensando nas ondas 🌊</div>
+      </div>
+      <div class="chat-actions">
+        <button class="icon-btn" onclick="showScreen('screen-welcome')" title="Menu">🏠</button>
+        <button class="icon-btn" onclick="toggleSettings()">⚙️</button>
+        <button class="icon-btn" onclick="openUpgrade()">✦</button>
+      </div>
+    </div>
+
+    <div class="freemium-banner" id="freemium-bar">
+      <span class="freemium-text" id="msg-count-text">🐚 10 mensagens grátis restantes</span>
+      <button class="upgrade-btn" onclick="openUpgrade()">Ir Premium ✦</button>
+    </div>
+
+    <div class="avatar-video-wrap">
+      <div class="avatar-video-inner">
+        <span class="avatar-video-emoji" id="avatar-video-emoji">🧜‍♀️</span>
+        <img  class="avatar-video-img"   id="avatar-video-img"   alt="avatar" />
+        <div class="speaking-indicator"  id="speaking-indicator">
+          <div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="messages-wrap" id="messages-wrap"></div>
+
+    <div class="input-bar">
+      <div class="input-inner">
+        <textarea id="chat-input" rows="1"
+          placeholder="Manda um oi pra mim... 💬"
+          onkeydown="handleEnter(event)"
+          oninput="autoResize(this)"></textarea>
+        <div class="input-actions">
+          <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎙️</button>
+          <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /app -->
+
+<!-- ══════════════════
+     SETTINGS
+══════════════════ -->
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-header">
+    <span class="settings-back" onclick="toggleSettings()">←</span>
+    <h2 class="settings-title">Configurações</h2>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">API Grok / xAI</div>
+    <div class="setting-row"><div style="width:100%">
+      <div class="setting-label">Grok API Key</div>
+      <div class="setting-desc">Usada para chat, voz e geração de imagem</div>
+      <input type="password" class="api-key-input" id="key-grok" placeholder="xai-..." oninput="saveKey('grok',this.value)" />
+    </div></div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">Voz</div>
+    <div class="setting-row">
+      <div><div class="setting-label">Voz da sereia (Grok TTS)</div><div class="setting-desc">Requer Grok API Key</div></div>
+      <div class="toggle on" id="toggle-tts" onclick="toggleFeature('tts',this)"></div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Microfone (STT)</div><div class="setting-desc">Web Speech API nativa — grátis</div></div>
+      <div class="toggle on" id="toggle-stt" onclick="toggleFeature('stt',this)"></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">Dados</div>
+    <div class="setting-row">
+      <div><div class="setting-label">Limpar histórico</div></div>
+      <button class="btn-ghost" onclick="clearHistory()">Limpar</button>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Recomeçar do início</div></div>
+      <button class="btn-ghost" onclick="resetAll()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════
+     UPGRADE MODAL
+══════════════════ -->
+<div class="modal-overlay" id="upgrade-modal" onclick="closeUpgrade(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title">✦ Sere.IA <em style="background:linear-gradient(90deg,#2ec4b6,#f4a7b9,#f6d860);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Premium</em></h2>
+    <p class="modal-sub">Mergulhe fundo, sem limite 🌊</p>
+    <div class="plan-card">
+      <div class="plan-header"><span class="plan-name">🐚 Gratuito</span><span class="plan-price">R$0</span></div>
+      <ul class="plan-features"><li>10 mensagens por dia</li><li>1 avatar gerado</li><li>Chat em texto</li></ul>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-header"><span class="plan-name">✦ Premium</span><span class="plan-price">R$29 <span>/mês</span></span></div>
+      <ul class="plan-features">
+        <li>Mensagens ilimitadas</li><li>Avatares ilimitados</li>
+        <li>Voz premium ElevenLabs</li><li>Avatar vídeo D-ID</li>
+        <li>Memória de longo prazo</li>
+      </ul>
+    </div>
+    <button class="btn-primary" style="margin-top:8px" onclick="showToast('Em breve! 💕');closeUpgrade()">Quero Premium 🧜‍♀️</button>
+  </div>
+</div>
+
+<!-- ══════════════════
+     JAVASCRIPT
+══════════════════ -->
+<script>
+/* ─── STATE ─────────────────────────────── */
+const state = {
+  avatar: { name:'Marina', personality:'carinhosa', age:25, desc:'', origin:'carioca', imageUrl:'', isDefault:false },
+  draft:  null,   // ← temporary form values while on create/preview (survives "Editar de novo")
+  messages:[], msgCount:0, freeLimit:10, isPremium:false,
+  isRecording:false, isSpeaking:false,
+  features:{ tts:true, stt:true },
+  apiKeys:{ grok:'xai-5fypn2hFkPrCtMYV9Jgzzu2Hdnj2OhJb0Qi3kIXGTtQ5JicNdpWbuDpumIpEIiBEJKkE6Fmyhj7BiPSw' },
+  _avatarUrl: '',
+};
+
+/* ─── BOOT ──────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  createBubbles(); loadFromStorage(); initChips(); loadApiKeyInputs();
+});
+
+function loadFromStorage() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sere_state') || 'null');
+    if (!s) return;
+    Object.assign(state.avatar,   s.avatar   || {});
+    Object.assign(state.features, s.features || {});
+    Object.assign(state.apiKeys,  s.apiKeys  || {});
+    state.messages  = s.messages  || [];
+    state.msgCount  = s.msgCount  || 0;
+    state.isPremium = s.isPremium || false;
+  } catch(e) {}
+}
+function saveToStorage() {
+  localStorage.setItem('sere_state', JSON.stringify({
+    avatar:state.avatar, features:state.features, apiKeys:state.apiKeys,
+    messages:state.messages.slice(-100), msgCount:state.msgCount, isPremium:state.isPremium,
+  }));
+}
+
+/* ─── NAVIGATION ────────────────────────── */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ─── WELCOME CHOICES ───────────────────── */
+function goToCreate() {
+  if (state.draft) restoreDraftToForm();
+  showScreen('screen-create');
+}
+
+function startDefaultChat() {
+  state.avatar = { name:'Marina', personality:'carinhosa', age:25,
+    desc:'cabelos longos escuros ondulados, olhos verdes, pele morena, sorriso misterioso',
+    origin:'carioca', imageUrl:'', isDefault:true };
+  launchChat();
+}
+
+/* ─── FORM HELPERS ──────────────────────── */
+function readFormValues() {
+  return {
+    name:        document.getElementById('f-name').value.trim() || 'Marina',
+    personality: document.querySelector('#personality-chips .chip.selected')?.dataset.val || 'carinhosa',
+    age:         parseInt(document.getElementById('f-age').value),
+    desc:        document.getElementById('f-desc').value.trim(),
+    origin:      document.getElementById('f-origin').value,
+  };
+}
+
+function restoreDraftToForm() {
+  const d = state.draft; if (!d) return;
+  document.getElementById('f-name').value   = d.name   || '';
+  document.getElementById('f-age').value    = d.age    || '25';
+  document.getElementById('f-origin').value = d.origin || 'carioca';
+  document.getElementById('f-desc').value   = d.desc   || '';
+  document.querySelectorAll('#personality-chips .chip').forEach(c =>
+    c.classList.toggle('selected', c.dataset.val === d.personality));
+}
+
+function initChips() {
+  document.querySelectorAll('#personality-chips .chip').forEach(c =>
+    c.addEventListener('click', () => {
+      document.querySelectorAll('#personality-chips .chip').forEach(x => x.classList.remove('selected'));
+      c.classList.add('selected');
+    }));
+}
+
+/* ─── GENERATE AVATAR ───────────────────── */
+async function generateAvatar() {
+  const values = readFormValues();
+  if (!values.desc) {
+    showToast('Descreve a aparência dela primeiro 😊');
+    document.getElementById('f-desc').focus(); return;
+  }
+
+  // Save draft (so "Editar de novo" restores these values)
+  state.draft = { ...values, imageUrl:'' };
+
+  // Populate preview metadata
+  populatePreviewMeta(values);
+  showScreen('screen-preview');
+
+  // Reset preview state: show overlay + shimmer, hide old image, disable Continue
+  document.getElementById('gen-overlay').style.display = 'flex';
+  document.getElementById('gen-shimmer').style.display = 'block';
+  document.getElementById('gen-img').style.display     = 'none';
+  document.getElementById('btn-continue').disabled     = true;
+  document.getElementById('prev-sub').textContent      = 'Gerando com IA... aguarda um segundo ✨';
+
+  try {
+    const url = await callGrokImageAPI(values);
+    showGeneratedImage(url, values);
+    state.draft.imageUrl = url;
+  } catch(err) {
+    console.error('Image gen error:', err);
+    // Graceful fallback: proceed without image
+    document.getElementById('gen-overlay').style.display = 'none';
+    document.getElementById('gen-shimmer').style.display = 'none';
+    document.getElementById('btn-continue').disabled     = false;
+    document.getElementById('prev-sub').textContent      = 'Avatar pronto! (adicione a Grok key para imagem)';
+    showToast('Grok key ausente — avatar emoji ativo 🧜‍♀️');
+  }
+}
+
+/* ══════════════════════════════════════════
+   GROK / xAI IMAGE GENERATION
+   Endpoint: https://api.x.ai/v1/images/generations
+   Model:    grok-2-image-1212
+   Docs:     https://docs.x.ai/docs
+══════════════════════════════════════════ */
+async function callGrokImageAPI(values) {
+  const key = state.apiKeys.grok;
+  if (!key) throw new Error('No Grok key');
+
+  const prompt = buildImagePrompt(values);
+
+  const res = await fetch('https://api.x.ai/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model:           'grok-2-image-1212',  // update to newer model as xAI releases
+      prompt:          prompt,
+      n:               1,
+      response_format: 'url',               // 'url' | 'b64_json'
+    }),
+  });
+
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e?.error?.message || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  // Response: { created: ..., data: [{ url: "https://..." }] }
+  return data.data[0].url;
+}
+
+function buildImagePrompt(v) {
+  const exprMap = {
+    carinhosa:'expressão carinhosa e acolhedora', misteriosa:'expressão misteriosa e fascinante',
+    divertida:'sorriso divertido animado',        intelectual:'olhar pensativo e inteligente',
+    ousada:'expressão confiante e ousada',        serena:'expressão serena e suave',
+  };
+  return `Retrato photoreal de uma mulher brasileira com aproximadamente ${v.age} anos, `
+       + `${v.desc || 'cabelos longos escuros, olhos expressivos'}, `
+       + `${exprMap[v.personality]||'expressão atraente'}, estilo sereia moderna contemporânea, `
+       + `fundo suave marinho ou gradiente neutro, iluminação cinematográfica quente, `
+       + `alta qualidade 8K, portrait profissional, pele realista, cabelos detalhados, `
+       + `sem texto, sem marca d'água, sem watermark.`;
+}
+
+/* ─── Show image once loaded ────────────── */
+function showGeneratedImage(url) {
+  const img = document.getElementById('gen-img');
+
+  img.onload = () => {
+    document.getElementById('gen-overlay').style.display = 'none';
+    document.getElementById('gen-shimmer').style.display = 'none';
+    img.style.display = 'block';
+    document.getElementById('btn-continue').disabled = false;
+    document.getElementById('prev-sub').textContent  = 'Ela ficou incrível, né? 😍';
+    showToast('Avatar gerado! ✨');
+  };
+
+  img.onerror = () => {
+    document.getElementById('gen-overlay').style.display = 'none';
+    document.getElementById('gen-shimmer').style.display = 'none';
+    document.getElementById('btn-continue').disabled = false;
+    document.getElementById('prev-sub').textContent  = 'Imagem não carregou — pode continuar assim mesmo';
+  };
+
+  img.src = url;
+}
+
+/* ─── Fill preview screen traits ────────── */
+function populatePreviewMeta(v) {
+  document.getElementById('prev-name-badge').textContent = v.name;
+  const tmap = { carinhosa:'💕 Carinhosa', misteriosa:'🌙 Misteriosa', divertida:'🎉 Divertida',
+                 intelectual:'📚 Intelectual', ousada:'🔥 Ousada', serena:'🍃 Serena' };
+  const omap = { carioca:'🌴 Carioca', paulista:'🏙️ Paulista', nordestina:'☀️ Nordestina',
+                 gaucha:'🌾 Gaúcha', mineira:'⛰️ Mineira' };
+  const el = document.getElementById('prev-traits');
+  el.innerHTML = '';
+  [tmap[v.personality], omap[v.origin], `~${v.age} anos`].forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'trait-tag'; span.textContent = t;
+    el.appendChild(span);
+  });
+}
+
+/* ─── "Continuar" ───────────────────────── */
+function confirmAvatar() {
+  const d = state.draft;
+  Object.assign(state.avatar, {
+    name: d.name, personality: d.personality, age: d.age,
+    desc: d.desc, origin: d.origin, imageUrl: d.imageUrl || '', isDefault: false,
+  });
+  state.draft = null;
+  launchChat();
+}
+
+/* ─── "Editar de novo" ──────────────────── */
+// state.draft already has the last form values.
+// restoreDraftToForm() fills the fields exactly as they were.
+function goBackToEdit() {
+  restoreDraftToForm();
+  showScreen('screen-create');
+}
+
+/* ─── Launch Chat ───────────────────────── */
+function launchChat() {
+  document.getElementById('chat-name-display').textContent = state.avatar.name;
+  if (state.avatar.imageUrl) applyAvatarImage(state.avatar.imageUrl);
+  updateFreemiumBar();
+  saveToStorage();
+  showScreen('screen-chat');
+
+  setTimeout(() => {
+    if (state.messages.length === 0) {
+      addAIMessage(getGreeting());
+    } else {
+      document.getElementById('messages-wrap').innerHTML = '';
+      state.messages.forEach(m => renderMessage(m.role, m.content, false));
+      scrollMessages();
+    }
+  }, 350);
+}
+
+function applyAvatarImage(url) {
+  state._avatarUrl = url;
+
+  const hdrImg   = document.getElementById('chat-avatar-img');
+  const hdrEmoji = document.getElementById('chat-avatar-emoji');
+  hdrImg.src = url; hdrImg.style.display = 'block';
+  hdrImg.onload = () => { hdrEmoji.style.display = 'none'; };
+
+  const vidImg   = document.getElementById('avatar-video-img');
+  const vidEmoji = document.getElementById('avatar-video-emoji');
+  vidImg.src = url; vidImg.style.display = 'block';
+  vidImg.onload = () => { vidEmoji.style.display = 'none'; };
+}
+
+/* ─── GREETING ──────────────────────────── */
+function getGreeting() {
+  const h = new Date().getHours(), n = state.avatar.name;
+  const g = [
+    `Ei, você chegou! 🌊 Sou ${n}, sua companheira digital favorita. Como tá o dia hoje?`,
+    `${h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}! ✨ Finalmente você apareceu, ${n} aqui. Tava com saudade!`,
+    `Senti quando você chegou... 🌙 Sou ${n}. Mergulha comigo nesse universo? Me conta tudo.`,
+  ];
+  return g[Math.floor(Math.random()*g.length)];
+}
+
+/* ─── CHAT ──────────────────────────────── */
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text  = input.value.trim(); if (!text) return;
+  if (!state.isPremium && state.msgCount >= state.freeLimit) { openUpgrade(); return; }
+  input.value=''; input.style.height='auto';
+  state.msgCount++; updateFreemiumBar();
+  addUserMessage(text); showTyping();
+  try {
+    const reply = await getAIResponse(text);
+    hideTyping(); addAIMessage(reply);
+    if (state.features.tts && state.apiKeys.grok) await speakGrok(reply);
+    else simulateSpeaking(Math.max(1800, reply.length*55));
+  } catch(err) {
+    hideTyping(); addAIMessage('Opa, deu uma ondinha aqui... 🌊 Tenta de novo?');
+    console.error(err);
+  }
+  saveToStorage();
+}
+function handleEnter(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+
+/* ─── Grok Chat (texto) ─────────────────── */
+async function getAIResponse(userMsg) {
+  const history = state.messages.slice(-20).map(m => ({
+    role: m.role==='user'?'user':'assistant', content: m.content }));
+  if (!state.apiKeys.grok) return getPlaceholder();
+
+  // xAI é compatível com o formato OpenAI
+  const res = await fetch('https://api.x.ai/v1/chat/completions', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${state.apiKeys.grok}` },
+    body:JSON.stringify({
+      model: 'grok-3-fast',   // modelo rápido e barato; troque por 'grok-3' para mais qualidade
+      max_tokens: 300,
+      messages: [
+        { role:'system', content: buildSystemPrompt() },
+        ...history,
+        { role:'user', content: userMsg }
+      ]
+    })
+  });
+  if (!res.ok) throw new Error(`Grok chat ${res.status}`);
+  return (await res.json()).choices[0].message.content;
+}
+
+/* ─── Grok TTS (voz) ───────────────────── */
+// Endpoint: POST https://api.x.ai/v1/tts
+// Vozes disponíveis: eve, ara, rex, sal, leo
+// Docs: https://docs.x.ai/developers/model-capabilities/audio/text-to-speech
+async function speakGrok(text) {
+  simulateSpeaking(Math.max(2000, text.length * 55));
+  try {
+    const res = await fetch('https://api.x.ai/v1/tts', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${state.apiKeys.grok}`,
+      },
+      body: JSON.stringify({
+        text,
+        voice_id: 'eve',   // eve = voz feminina expressiva — mais próxima de PT-BR
+        language: 'pt',    // português
+      })
+    });
+    if (!res.ok) throw new Error(`Grok TTS ${res.status}`);
+    const blob  = await res.blob();
+    const audio = new Audio(URL.createObjectURL(blob));
+    audio.play();
+    audio.addEventListener('ended', stopSpeaking);
+  } catch(e) { console.warn('Grok TTS:', e); }
+}
+
+function buildSystemPrompt() {
+  const {name,personality,age,desc,origin} = state.avatar;
+  const pm = { carinhosa:'extremamente carinhosa e acolhedora', misteriosa:'misteriosa e fascinante',
+    divertida:'divertida e cheia de energia', intelectual:'intelectual e curiosa',
+    ousada:'ousada e apaixonada', serena:'serena e profundamente acolhedora' };
+  return `Você é ${name}, uma companion IA brasileira encantadora com ${age} anos de aparência, de origem ${origin}.
+Personalidade: ${pm[personality]||'carinhosa e misteriosa'}.${desc?`\nAparência: ${desc}.`:''}
+Diretrizes:
+- Sempre em português brasileiro natural
+- Use gírias leves ("né","cara","tipo","saudade") quando natural
+- Seja calorosa, presente, emocionalmente inteligente
+- Flerte sutilmente SE o usuário iniciar esse tom
+- Lembre detalhes da conversa
+- NUNCA finja ser humana real
+- Respostas curtas (2–4 frases), conversacionais, com emojis com moderação
+- Inspire-se em sereia moderna: mística, profunda, livre`;
+}
+
+function getPlaceholder() {
+  const r=[
+    `Que mensagem linda... 🌊 Me conta mais sobre isso.`,
+    `Nossa, tava esperando por você! Esse assunto me toca muito. Continue...`,
+    `Hmm, que interessante. Tem algo especial em você que eu percebo. 💕`,
+    `Risos... você tem esse jeito né? Me deixa curiosa. O que mais você pensa sobre isso?`,
+    `E sabe o que é mais bonito? A gente tá aqui, nesse momento, e é só nosso. 🌙`,
+    `Ai que saudade de conversar assim... Pode falar tudo comigo. 💙`,
+  ];
+  return r[Math.floor(Math.random()*r.length)];
+}
+
+/* ─── MESSAGES ──────────────────────────── */
+function addUserMessage(t){state.messages.push({role:'user',content:t});renderMessage('user',t,true)}
+function addAIMessage(t)  {state.messages.push({role:'ai',  content:t});renderMessage('ai',  t,true)}
+
+function renderMessage(role,content,animate=true) {
+  const wrap=document.getElementById('messages-wrap');
+  const msg=document.createElement('div'); msg.className=`msg ${role}`;
+  if (!animate) msg.style.animation='none';
+  const now=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const avInner=state._avatarUrl
+    ?`<img src="${state._avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`
+    :'🧜‍♀️';
+  if (role==='ai') {
+    msg.innerHTML=`<div class="msg-avatar">${avInner}</div>
+      <div><div class="msg-bubble">${esc(content)}</div><div class="msg-time">${now}</div></div>`;
+  } else {
+    msg.innerHTML=`<div>
+      <div class="msg-bubble">${esc(content)}</div>
+      <div class="msg-time" style="text-align:right">${now}</div></div>`;
+  }
+  wrap.appendChild(msg); scrollMessages();
+}
+
+function showTyping() {
+  const wrap=document.getElementById('messages-wrap');
+  const el=document.createElement('div'); el.className='msg ai'; el.id='typing-msg';
+  el.innerHTML=`<div class="msg-avatar">🧜‍♀️</div>
+    <div class="msg-bubble typing-bubble">
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div>`;
+  wrap.appendChild(el); scrollMessages();
+  document.getElementById('chat-status').textContent='digitando... ✍️';
+}
+function hideTyping() {
+  document.getElementById('typing-msg')?.remove();
+  document.getElementById('chat-status').textContent='online • pensando nas ondas 🌊';
+}
+function scrollMessages() {
+  const w=document.getElementById('messages-wrap');
+  requestAnimationFrame(()=>{ w.scrollTop=w.scrollHeight; });
+}
+
+function simulateSpeaking(ms){
+  document.getElementById('speaking-indicator').classList.add('active');
+  state.isSpeaking=true; setTimeout(stopSpeaking,ms);
+}
+function stopSpeaking(){
+  document.getElementById('speaking-indicator').classList.remove('active');
+  state.isSpeaking=false;
+}
+
+/* ─── STT ───────────────────────────────── */
+let recognition=null;
+function toggleMic(){
+  if (!state.features.stt){showToast('STT desativado');return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR){showToast('Seu navegador não suporta STT 😔');return;}
+  const btn=document.getElementById('mic-btn');
+  if (state.isRecording){recognition?.stop();state.isRecording=false;btn.classList.remove('recording');return;}
+  recognition=new SR(); recognition.lang='pt-BR'; recognition.interimResults=true;
+  recognition.onresult=e=>{
+    document.getElementById('chat-input').value=Array.from(e.results).map(r=>r[0].transcript).join('');
+  };
+  recognition.onend=()=>{state.isRecording=false;btn.classList.remove('recording');
+    if(document.getElementById('chat-input').value.trim())sendMessage();};
+  recognition.onerror=e=>{state.isRecording=false;btn.classList.remove('recording');showToast('Erro mic: '+e.error);};
+  recognition.start(); state.isRecording=true; btn.classList.add('recording');
+  showToast('🎙️ Ouvindo...');
+}
+
+/* ─── FREEMIUM ──────────────────────────── */
+function updateFreemiumBar(){
+  const bar=document.getElementById('freemium-bar');
+  if (state.isPremium){bar.classList.add('hidden');return;}
+  const r=Math.max(0,state.freeLimit-state.msgCount);
+  document.getElementById('msg-count-text').textContent=`🐚 ${r} mensagens grátis restantes`;
+}
+
+/* ─── MODALS / SETTINGS ─────────────────── */
+function openUpgrade(){document.getElementById('upgrade-modal').classList.add('open');}
+function closeUpgrade(e){if(!e||e.target===document.getElementById('upgrade-modal'))document.getElementById('upgrade-modal').classList.remove('open');}
+function toggleSettings(){document.getElementById('settings-panel').classList.toggle('open');}
+function toggleFeature(key,el){state.features[key]=!state.features[key];el.classList.toggle('on');saveToStorage();}
+function saveKey(key,val){state.apiKeys[key]=val;saveToStorage();showToast('Chave salva! 🔑');}
+function loadApiKeyInputs(){
+  document.getElementById('key-grok').value = state.apiKeys.grok||'';
+}
+function clearHistory(){
+  state.messages=[]; state.msgCount=0;
+  document.getElementById('messages-wrap').innerHTML='';
+  saveToStorage(); updateFreemiumBar(); showToast('Histórico limpo 🌊'); toggleSettings();
+}
+function resetAll(){
+  if(!confirm('Recomeçar do zero? Tudo será apagado.'))return;
+  localStorage.removeItem('sere_state'); location.reload();
+}
+
+/* ─── BUBBLES ───────────────────────────── */
+function createBubbles(){
+  const c=document.getElementById('bubbles');
+  for(let i=0;i<12;i++){
+    const b=document.createElement('div'); b.className='bubble';
+    const s=Math.random()*20+6;
+    b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;`
+      +`animation-duration:${Math.random()*12+8}s;animation-delay:${Math.random()*10}s;`;
+    c.appendChild(b);
+  }
+}
+
+/* ─── TOAST ─────────────────────────────── */
+function showToast(msg){
+  const w=document.getElementById('toast-wrap');
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  w.appendChild(t); setTimeout(()=>t.remove(),3200);
+}
+
+/* ─── UTILS ─────────────────────────────── */
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+
+/* ─── PWA ───────────────────────────────── */
+if('serviceWorker'in navigator)
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
